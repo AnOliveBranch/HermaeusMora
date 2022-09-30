@@ -5,11 +5,12 @@ const {
 
 const {
     Client,
-    Intents
+    GatewayIntentBits
 } = require('discord.js');
 
 const client = new Client({
-    intents: [Intents.FLAGS.GUILDS]
+    intents: [GatewayIntentBits.Guilds]
+    //intents: []
 });
 
 client.once('ready', () => {

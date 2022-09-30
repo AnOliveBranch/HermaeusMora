@@ -8,7 +8,8 @@ const {
 } = require('discord.js');
 
 const client = new Client({
-    intents: [Intents.FLAGS.GUILDS]
+    //intents: [Intents.FLAGS.GUILDS]
+    intents: []
 });
 
 client.once('ready', () => {

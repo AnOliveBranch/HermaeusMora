@@ -1,5 +1,5 @@
 const { REST, SlashCommandBuilder, Routes } = require('discord.js');
-const { clientId, guildId, discordToken } = require('../config.json');
+const { clientId, guildId, discordToken } = require('./config.json');
 
 const commands = [
 	new SlashCommandBuilder().setName('nexus')
