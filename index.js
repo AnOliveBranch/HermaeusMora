@@ -24,11 +24,23 @@ client.on('interactionCreate', async (interaction) => {
     const { commandName } = interaction;
 
     if (commandName === 'nexus') {
+        //console.log(interaction);
+        //console.log(interaction.options);
+        const group = interaction.options.getSubcommandGroup();
         const subcommand = interaction.options.getSubcommand();
-        if (subcommand === 'help') {
-            await interaction.reply('helping');
-        } else {
-            await interaction.reply('nex');
+        if (group === null) {
+            if (subcommand === 'help') {
+                await interaction.reply('helping');
+            }
+        } else if (group === 'auth') {
+            if (subcommand === 'help') {
+                await interaction.reply('helping with authentication');
+            } else if (subcommand === 'check') {
+                await interaction.reply('checking authentication');
+            } else if (subcommand === 'set') {
+                let token = interaction.options.getString('token');
+                await interaction.reply(`setting token to ${token}`);
+            }
         }
     }
 });
