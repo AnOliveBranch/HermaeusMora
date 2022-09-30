@@ -1,6 +1,6 @@
+// Copy this file to config.json and remove all "comments"
 {
-    "nexusToken": "",
-    "discordToken": "",
-    "guildId": "",
-    "clientId": ""
+    "discordToken": "", // Discord token for the bot
+    "guildId": "", // Guild ID for deploying guild-specific commands
+    "clientId": "" // Application ID found in discord dev portal
 }
