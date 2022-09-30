@@ -1,24 +1,15 @@
-const fs = require('fs');
 const {
     Client,
-    Collection,
-    Intents
+    GatewayIntentBits
 } = require('discord.js');
 const {
     discordToken
 } = require('./config.json');
 
 const client = new Client({
-    intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]
+    intents: [GatewayIntentBits.Guilds]
 });
 
-client.commands = new Collection();
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    client.commands.set(command.data.name, command);
-}
 
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -26,20 +17,19 @@ client.once('ready', () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isCommand()) {
+    if (!interaction.isChatInputCommand()) {
         return;
     }
 
-    const command = client.commands.get(interaction.commandName);
+    const { commandName } = interaction;
 
-    if (!command) {
-        return;
-    }
-
-    try {
-        await command.execute(interaction);
-    } catch (error) {
-        await interaction.editReply(error);
+    if (commandName === 'nexus') {
+        const subcommand = interaction.options.getSubcommand();
+        if (subcommand === 'help') {
+            await interaction.reply('helping');
+        } else {
+            await interaction.reply('nex');
+        }
     }
 });
 
