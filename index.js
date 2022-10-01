@@ -10,7 +10,12 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
+const fs = require('fs');
+
+let tokens = new Map();
+
 client.once('ready', () => {
+    loadData();
     console.log(`Logged in as ${client.user.tag}!`);
     client.user.setActivity('Nexus Mods');
 });
@@ -51,6 +56,20 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 });
+
+async function loadData() {
+    if (fs.existsSync('./tokens.json')) {
+        const tokens = await fs.promises.readFile('./tokens.json', 'utf8');
+        tokenJSON = JSON.parse(tokens);
+        for (const userID in tokenJSON) {
+            tokens.set(userID, tokenJSON[userID]);
+        }
+    }
+}
+
+async function saveData() {
+    await fs.writeFile('./tokens.json', JSON.stringify(Object.fromEntries(tokens)));
+}
 
 function getCommandHelp() {
     const help = 'This bot is used to retrieve version and download link info from <https://nexusmods.com>\n';
