@@ -323,3 +323,5 @@ $RECYCLE.BIN/
 
 # Ensure user token is not committed
 config.json
+# Ensure user nexus api keys are not committed
+tokens.json

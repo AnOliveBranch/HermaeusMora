@@ -1,3 +1,5 @@
+// THIS SCRIPT HAS NOT BEEN UPDATED AND IS LIKELY NONFUNCTIONAL
+
 const {
     discordToken
 } = require('../config.json');
@@ -8,7 +10,8 @@ const {
 } = require('discord.js');
 
 const client = new Client({
-    intents: [Intents.FLAGS.GUILDS]
+    //intents: [Intents.FLAGS.GUILDS]
+    intents: []
 });
 
 client.once('ready', () => {
