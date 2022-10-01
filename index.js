@@ -128,7 +128,7 @@ function getCommandHelp() {
 function getAuthHelp() {
     let help = 'NexusMods API Acceptable Use Policy (found here: <https://help.nexusmods.com/article/114-api-acceptable-use-policy>) ';
     help += 'requires all users to provide their own personal API key to this application for use. ';
-    help += 'You can find your personal API key here: <https://www.nexusmods.com/users/myaccount?tab=api>\n';
+    help += 'You can find your personal API key here: <https://www.nexusmods.com/users/myaccount?tab=api>, scroll to the bottom of the page\n';
     help += 'API keys can be registred to this bot using the following command:\n';
     help += '`/nexus auth set <token>`\n';
     help += 'This bot will verify the token with NexusMods and store it for future use\n';
