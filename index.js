@@ -61,6 +61,14 @@ client.on('interactionCreate', async (interaction) => {
                 } else {
                     await interaction.reply('Your NexusMods API token was invalid. Try again with a different token');
                 }
+            } else if (subcommand === 'remove') {
+                if (tokens.get(interaction.user.id) === undefined) {
+                    await interaction.reply('You do not have a stored API key');
+                } else {
+                    tokens.delete(interaction.user.id);
+                    saveData();
+                    await interaction.reply('Your NexusMods API key is no longer being stored');
+                }
             }
         }
     }
