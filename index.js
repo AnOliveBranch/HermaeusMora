@@ -103,4 +103,14 @@ function getAuthHelp() {
     return help;
 }
 
+function checkAuthentication(user) {
+    const id = user.id;
+    const token = tokens.get(id);
+    if (token === undefined) {
+        return 'null';
+    } else {
+        return 'invalid';
+    }
+}
+
 client.login(discordToken);
