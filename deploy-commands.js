@@ -9,6 +9,36 @@ const commands = [
             subcommand
                 .setName('help')
                 .setDescription('Displays information about the /nexus command'))
+        // Command: /nexus link <link> <version>
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('link')
+                .setDescription('Retrieves a download link from Nexus Mods')
+                .addStringOption(option =>
+                    option
+                        .setName('link')
+                        .setDescription('The link to the mod')
+                        .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option
+                        .setName('version')
+                        .setDescription('The desired version of the mod')
+                        .setRequired(true)
+                )
+        )
+        // Command: /nexus versions <link>
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('versions')
+                .setDescription('Retrieves a list of versions for a mod')
+                .addStringOption(option =>
+                    option
+                        .setName('link')
+                        .setDescription('The link to the mod')
+                        .setRequired(true)
+                )
+        )
         // Command group: /nexus auth
         .addSubcommandGroup(group =>
             group
@@ -29,7 +59,7 @@ const commands = [
                     subcommand
                         .setName('set')
                         .setDescription('Command to setup your authentication')
-                        // Option: /nexus auth set {token}
+                        // Option: /nexus auth set <token>
                         .addStringOption(option =>
                             option
                                 .setName('token')
