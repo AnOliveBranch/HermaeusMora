@@ -61,13 +61,13 @@ client.on('interactionCreate', async (interaction) => {
                 let user = interaction.user;
                 const authResult = await checkAuthentication(user);
                 if (authResult === 'valid') {
-                    await interaction.reply('Your NexusMods API key is valid!');
+                    await interaction.reply({ content: 'Your NexusMods API key is valid!', ephemeral: true });
                 } else if (authResult === 'invalid') {
-                    await interaction.reply('Your NexusMods API key is invalid. Update it with `/nexus auth set <token>`. See `/nexus auth help` for more information');
+                    await interaction.reply({ content: 'Your NexusMods API key is invalid. Update it with `/nexus auth set <token>`. See `/nexus auth help` for more information', ephemeral: true });
                 } else if (authResult === 'null') {
-                    await interaction.reply('You have not registered an API key with this bot. Set it with `/nexus auth set <token>`. See `/nexus auth help` for more information')
+                    await interaction.reply({ content: 'You have not registered an API key with this bot. Set it with `/nexus auth set <token>`. See `/nexus auth help` for more information', ephemeral: true });
                 } else {
-                    await interaction.reply('This shouldn\'t be able to happen. Contact @Robotic#1111 to investigate');
+                    await interaction.reply({ content: 'This shouldn\'t be able to happen. Contact @Robotic#1111 to investigate', ephemeral: true });
                     console.log(authResult);
                 }
             } else if (subcommand === 'set') {
@@ -76,17 +76,17 @@ client.on('interactionCreate', async (interaction) => {
                 if (valid) {
                     tokens.set(interaction.user.id, token);
                     saveData();
-                    await interaction.reply('Your NexusMods API key has been validated and saved. Remove it with `/nexus auth remove`');
+                    await interaction.reply({ content: 'Your NexusMods API key has been validated and saved. Remove it with `/nexus auth remove`', ephemeral: true });
                 } else {
-                    await interaction.reply('Your NexusMods API token was invalid. Try again with a different token');
+                    await interaction.reply({ content: 'Your NexusMods API token was invalid. Try again with a different token', ephemeral: true });
                 }
             } else if (subcommand === 'remove') {
                 if (tokens.get(interaction.user.id) === undefined) {
-                    await interaction.reply('You do not have a stored API key');
+                    await interaction.reply({ content: 'You do not have a stored API key', ephemeral: true });
                 } else {
                     tokens.delete(interaction.user.id);
                     saveData();
-                    await interaction.reply('Your NexusMods API key is no longer being stored');
+                    await interaction.reply({ content: 'Your NexusMods API key is no longer being stored', ephemeral: true });
                 }
             }
         }
