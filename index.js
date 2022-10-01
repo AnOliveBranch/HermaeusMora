@@ -11,6 +11,7 @@ const client = new Client({
 });
 
 const fs = require('fs');
+const https = require('https');
 
 let tokens = new Map();
 
@@ -39,7 +40,7 @@ client.on('interactionCreate', async (interaction) => {
                 await interaction.reply(getAuthHelp());
             } else if (subcommand === 'check') {
                 let user = interaction.user;
-                const authResult = checkAuthentication(user);
+                const authResult = await checkAuthentication(user);
                 if (authResult === 'valid') {
                     await interaction.reply('Your NexusMods API key is valid!');
                 } else if (authResult === 'invalid') {
@@ -48,6 +49,7 @@ client.on('interactionCreate', async (interaction) => {
                     await interaction.reply('You have not registered an API key with this bot. Set it with `/nexus auth set <token>`. See `/nexus auth help` for more information')
                 } else {
                     await interaction.reply('This shouldn\'t be able to happen. Contact @Robotic#1111 to investigate');
+                    console.log(authResult);
                 }
             } else if (subcommand === 'set') {
                 const token = interaction.options.getString('token');
@@ -103,14 +105,45 @@ function getAuthHelp() {
     return help;
 }
 
-function checkAuthentication(user) {
-    const id = user.id;
-    const token = tokens.get(id);
-    if (token === undefined) {
-        return 'null';
-    } else {
-        return 'invalid';
-    }
+async function checkAuthentication(user) {
+    return new Promise((resolve) => {
+        const id = user.id;
+        const token = tokens.get(id);
+        if (token === undefined) {
+            resolve('null');
+        } else {
+            const response = validateToken(token);
+            resolve(response);
+        }
+    });
+}
+
+async function validateToken(token) {
+    return new Promise((resolve, reject) => {
+        let options = {
+            headers: {
+                accept: 'application/json',
+                apikey: token
+            }
+        }
+        https.get('https://api.nexusmods.com/v1/users/validate.json', options, (res) => {
+            res.on('error', (err) => {
+                console.log(err);
+                reject(err);
+            });
+    
+            let content = '';
+            res.on('data', (chunk) => {
+                content += chunk;
+            });
+    
+            res.on('end', () => {
+                let json = JSON.parse(content);
+                console.log(json);
+                resolve(json);
+            });
+        });
+    });
 }
 
 client.login(discordToken);
