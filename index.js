@@ -93,7 +93,7 @@ async function saveData() {
 }
 
 function getCommandHelp() {
-    const help = 'This bot is used to retrieve version and download link info from <https://nexusmods.com>\n';
+    let help = 'This bot is used to retrieve version and download link info from <https://nexusmods.com>\n';
     help += 'To get a download link, use the following format:\n';
     help += '`/nexus link <link> <version>`\n';
     help += 'To get a list of versions, use the following format:\n';
@@ -107,7 +107,7 @@ function getCommandHelp() {
 }
 
 function getAuthHelp() {
-    const help = 'NexusMods API Acceptable Use Policy (found here: <https://help.nexusmods.com/article/114-api-acceptable-use-policy>) ';
+    let help = 'NexusMods API Acceptable Use Policy (found here: <https://help.nexusmods.com/article/114-api-acceptable-use-policy>) ';
     help += 'requires all users to provide their own personal API key to this application for use. ';
     help += 'You can find your personal API key here: <https://www.nexusmods.com/users/myaccount?tab=api>\n';
     help += 'API keys can be registred to this bot using the following command:\n';
