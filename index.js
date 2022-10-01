@@ -131,12 +131,16 @@ async function checkAuthentication(user) {
         if (token === undefined) {
             resolve('null');
         } else {
-            const response = validateToken(token);
-            if (response) {
-                resolve('valid');
-            } else {
-                resolve('invalid');
-            }
+            validateToken(token).then((response) => {
+                if (response) {
+                    resolve('valid');
+                } else {
+                    resolve('invalid');
+                }
+            }).catch((err) => {
+                console.log(err);
+                reject(err);
+            });
         }
     });
 }
