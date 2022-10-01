@@ -36,6 +36,11 @@ const commands = [
                                 .setDescription('Your personal NexusMods API key')
                                 .setRequired(true))
                 )
+                // Command: /nexus auth remove
+                .addSubcommand(subcommand =>
+                    subcommand
+                        .setName('remove')
+                        .setDescription('Removes your API key from the bot\'s memory'))
         )
 ]
     .map(command => command.toJSON());
