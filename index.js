@@ -12,6 +12,7 @@ const client = new Client({
 
 const fs = require('fs');
 const https = require('https');
+const regex = new RegExp(/.*nexusmods\.com\/\w+\/mods\/\d+(\?.*)?/g);
 
 let tokens = new Map();
 
@@ -34,6 +35,24 @@ client.on('interactionCreate', async (interaction) => {
         if (group === null) {
             if (subcommand === 'help') {
                 await interaction.reply(getCommandHelp());
+            } else {
+                await interaction.deferReply();
+                let reply = await handle(interaction);
+                if (reply.length > 2000) {
+                    await interaction.editReply('Text response is too long for Discord, sending in multiple parts');
+                    let tempReply = '';
+                    let lines = reply.split('\n');
+                    for (let i = 0; i < lines.length; i++) {
+                        if (tempReply.length + lines[i].length > 2000) {
+                            await interaction.followUp(tempReply);
+                            tempReply = '';
+                        }
+                        tempReply += lines[i] + '\n';
+                    }
+                    await interaction.followUp(tempReply);
+                } else {
+                    await interaction.editReply(reply);
+                }
             }
         } else if (group === 'auth') {
             if (subcommand === 'help') {
@@ -158,12 +177,12 @@ async function validateToken(token) {
                 console.log(err);
                 reject(err);
             });
-    
+
             let content = '';
             res.on('data', (chunk) => {
                 content += chunk;
             });
-    
+
             res.on('end', () => {
                 let json = JSON.parse(content);
                 if (json.hasOwnProperty('message') && json['message'] === 'Please provide a valid API Key') {
@@ -174,6 +193,180 @@ async function validateToken(token) {
             });
         });
     });
+}
+
+async function handle(interaction) {
+    let subcommand = interaction.options.getSubcommand();
+
+    let link = interaction.options.getString('link');
+
+    return new Promise((resolve, reject) => {
+        checkAuthentication(interaction.user).then((auth) => {
+            if (auth === 'null') {
+                resolve('You do not have a stored NexusMods API key. Use `/nexus auth set <token>` to set it. See `/nexus auth help` for more information');
+                return;
+            } else if (auth === 'invalid') {
+                resolve('Your stored NexusMods API key is invalid. Use `/nexus auth set <token>` to update it. See `/nexus auth help` for more information');
+                return;
+            }
+        });
+
+        if (link.split(' ').length > 1) {
+            resolve(`Invalid link: \`${link}\``);
+            return;
+        }
+        if (!link.match(regex)) {
+            resolve(`Invalid link: \`${link}\``);
+            return;
+        }
+        let gameName = getGameName(link);
+        let modId = getModId(link);
+        getModFiles(gameName, modId, tokens.get(interaction.user.id)).then((files) => {
+            getModInfo(gameName, modId, tokens.get(interaction.user.id)).then((info) => {
+                if (subcommand === 'link') {
+                    let version = interaction.options.getString('version');
+                    resolve(getLink(version, files, info));
+                } else if (subcommand === 'versions') {
+                    resolve(getVersions(files, info));
+                }
+            }).catch(err => {
+                resolve(err);
+            });
+        }).catch(err => {
+            resolve(err);
+        });
+    });
+}
+
+function getLink(version, filesJSON, info) {
+    let fileIds = getFileIds(filesJSON, version);
+    if (fileIds.length == 0) {
+        return 'Could not find the specified version';
+    }
+    let modName = info.name;
+    if (fileIds.length > 1) {
+        let fileNames = '';
+        for (let i = 0; i < fileIds.length; i++) {
+            let fileId = fileIds[i][1][0];
+            let gameId = fileIds[i][1][1];
+            let uploadTime = fileIds[i][2].substring(0, 19);
+            fileNames += fileIds[i][0] + ` ${uploadTime} <https://www.nexusmods.com/Core/Libs/Common/Widgets/DownloadPopUp?id=${fileId}&game_id=${gameId}>\n`;
+        }
+        return (`Multiple files found for ${modName} version ${version}:\n${fileNames}`);
+    } else {
+        let fileId = fileIds[0][1][0];
+        let gameId = fileIds[0][1][1];
+        let fileName = fileIds[0][0];
+        return (`Download link to ${modName}: ${fileName} version ${version}\n<https://www.nexusmods.com/Core/Libs/Common/Widgets/DownloadPopUp?id=${fileId}&game_id=${gameId}>`);
+    }
+};
+
+function getGameName(link) {
+    return link.split('/')[3];
+}
+
+function getModId(link) {
+    let modId = link.split('/')[5];
+    if (modId.includes('?')) {
+        return modId.split('?')[0].substring(0, modId.split('?')[0].length);
+    } else {
+        return modId;
+    }
+}
+
+async function getModFiles(gameName, modId, token) {
+    let options = {
+        headers: {
+            accept: 'application/json',
+            apikey: token
+        }
+    }
+    return new Promise((resolve, reject) => {
+        https.get(`https://api.nexusmods.com/v1/games/${gameName}/mods/${modId}/files.json`, options, (res) => {
+            res.on('error', (err) => {
+                console.log('!!!!!!!!!!!!!!!');
+                console.log(err);
+                reject('An unknown error occured retrieving this mod');
+            });
+
+            let content = '';
+            res.on('data', (chunk) => {
+                content += chunk;
+            });
+
+            res.on('end', () => {
+                let files = JSON.parse(content);
+                if (files.hasOwnProperty('code')) {
+                    let errorCode = files.code;
+                    if (errorCode === 404) {
+                        reject('That mod does not exist');
+                    } else if (errorCode === 403) {
+                        reject('That mod is currently hidden');
+                    } else {
+                        console.log(files);
+                        reject('An unknown error occured retrieving this mod');
+                    }
+                    return;
+                } else if (files.hasOwnProperty('message')) {
+                    reject('An error occured');
+                    return;
+                }
+
+                resolve(files);
+            });
+        });
+    });
+};
+
+async function getModInfo(gameName, modId, token) {
+    let options = {
+        headers: {
+            accept: 'application/json',
+            apikey: token
+        }
+    }
+    return new Promise((resolve, reject) => {
+        https.get(`https://api.nexusmods.com/v1/games/${gameName}/mods/${modId}.json`, options, (res) => {
+            res.on('error', (err) => {
+                console.log(err);
+                reject('An unknown error occured retrieving mod info');
+            });
+
+            let content = '';
+            res.on('data', (chunk) => {
+                content += chunk;
+            });
+
+            res.on('end', () => {
+                let info = JSON.parse(content);
+                resolve(info);
+            });
+        });
+    });
+}
+
+function getFileIds(filesJSON, version) {
+    if (version === 'none' || version === 'blank') {
+        version = "";
+    }
+    let files = [];
+    for (let i = 0; i < filesJSON.files.length; i++) {
+        if (filesJSON.files[i].version == version) {
+            files.push([filesJSON.files[i].name, filesJSON.files[i].id, filesJSON.files[i].uploaded_time]);
+        }
+    }
+    return files;
+}
+
+function getVersions(filesJSON, info) {
+    let versions = [];
+    for (let i = 0; i < filesJSON.files.length; i++) {
+        if (!versions.includes(filesJSON.files[i].version)) {
+            versions.push(filesJSON.files[i].version);
+        }
+    }
+    let versionString = `Found the following versions for ${info.name}: ${versions.join(', ')}`;
+    return versionString;
 }
 
 client.login(discordToken);
