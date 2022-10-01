@@ -53,7 +53,14 @@ client.on('interactionCreate', async (interaction) => {
                 }
             } else if (subcommand === 'set') {
                 const token = interaction.options.getString('token');
-                await interaction.reply(`setting token to ${token}`);
+                const valid = await validateToken(token);
+                if (valid) {
+                    tokens.set(interaction.user.id, token);
+                    saveData();
+                    await interaction.reply('Your NexusMods API key has been validated and saved. Remove it with `/nexus auth remove`');
+                } else {
+                    await interaction.reply('Your NexusMods API token was invalid. Try again with a different token');
+                }
             }
         }
     }
@@ -61,8 +68,8 @@ client.on('interactionCreate', async (interaction) => {
 
 async function loadData() {
     if (fs.existsSync('./tokens.json')) {
-        const tokens = await fs.promises.readFile('./tokens.json', 'utf8');
-        tokenJSON = JSON.parse(tokens);
+        const tokensFile = await fs.promises.readFile('./tokens.json', 'utf8');
+        tokenJSON = JSON.parse(tokensFile);
         for (const userID in tokenJSON) {
             tokens.set(userID, tokenJSON[userID]);
         }
@@ -70,7 +77,11 @@ async function loadData() {
 }
 
 async function saveData() {
-    await fs.writeFile('./tokens.json', JSON.stringify(Object.fromEntries(tokens)));
+    await fs.writeFile('./tokens.json', JSON.stringify(Object.fromEntries(tokens)), (err) => {
+        if (err) {
+            console.log(err);
+        }
+    });
 }
 
 function getCommandHelp() {
@@ -113,7 +124,11 @@ async function checkAuthentication(user) {
             resolve('null');
         } else {
             const response = validateToken(token);
-            resolve(response);
+            if (response) {
+                resolve('valid');
+            } else {
+                resolve('invalid');
+            }
         }
     });
 }
@@ -139,8 +154,11 @@ async function validateToken(token) {
     
             res.on('end', () => {
                 let json = JSON.parse(content);
-                console.log(json);
-                resolve(json);
+                if (json.hasOwnProperty('message') && json['message'] === 'Please provide a valid API Key') {
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
             });
         });
     });
