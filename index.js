@@ -115,7 +115,7 @@ function getAuthHelp() {
     help += 'This bot will verify the token with NexusMods and store it for future use\n';
     help += 'Note: The API key will be stored in plaintext by the bot, it is necessary for it to function\n';
     help += 'At any time, you may revoke this access in one of three ways:\n';
-    help += '1) Use the command `/nexus auth revoke` (**preferred**)\n';
+    help += '1) Use the command `/nexus auth remove` (**preferred**)\n';
     help += '2) Go to your NexusMods account API page and delete your personal API key\n';
     help += '3) Go to your NexusMods account API page and regenerate your personal API key\n';
     help += 'You can verify that your API key stored by the bot is still valid using the following command:\n';
