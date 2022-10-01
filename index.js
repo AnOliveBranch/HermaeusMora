@@ -33,9 +33,19 @@ client.on('interactionCreate', async (interaction) => {
             if (subcommand === 'help') {
                 await interaction.reply(getAuthHelp());
             } else if (subcommand === 'check') {
-                await interaction.reply('checking authentication');
+                let user = interaction.user;
+                const authResult = checkAuthentication(user);
+                if (authResult === 'valid') {
+                    await interaction.reply('Your NexusMods API key is valid!');
+                } else if (authResult === 'invalid') {
+                    await interaction.reply('Your NexusMods API key is invalid. Update it with `/nexus auth set <token>`. See `/nexus auth help` for more information');
+                } else if (authResult === 'null') {
+                    await interaction.reply('You have not registered an API key with this bot. Set it with `/nexus auth set <token>`. See `/nexus auth help` for more information')
+                } else {
+                    await interaction.reply('This shouldn\'t be able to happen. Contact @Robotic#1111 to investigate');
+                }
             } else if (subcommand === 'set') {
-                let token = interaction.options.getString('token');
+                const token = interaction.options.getString('token');
                 await interaction.reply(`setting token to ${token}`);
             }
         }
@@ -43,7 +53,7 @@ client.on('interactionCreate', async (interaction) => {
 });
 
 function getCommandHelp() {
-    let help = 'This bot is used to retrieve version and download link info from <https://nexusmods.com>\n';
+    const help = 'This bot is used to retrieve version and download link info from <https://nexusmods.com>\n';
     help += 'To get a download link, use the following format:\n';
     help += '`/nexus link <link> <version>`\n';
     help += 'To get a list of versions, use the following format:\n';
@@ -57,7 +67,7 @@ function getCommandHelp() {
 }
 
 function getAuthHelp() {
-    let help = 'NexusMods API Acceptable Use Policy (found here: <https://help.nexusmods.com/article/114-api-acceptable-use-policy>) ';
+    const help = 'NexusMods API Acceptable Use Policy (found here: <https://help.nexusmods.com/article/114-api-acceptable-use-policy>) ';
     help += 'requires all users to provide their own personal API key to this application for use. ';
     help += 'You can find your personal API key here: <https://www.nexusmods.com/users/myaccount?tab=api>\n';
     help += 'API keys can be registred to this bot using the following command:\n';
