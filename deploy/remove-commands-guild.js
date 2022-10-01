@@ -1,3 +1,5 @@
+// THIS SCRIPT HAS NOT BEEN UPDATED AND IS LIKELY NONFUNCTIONAL
+
 const {
     guildId,
     discordToken
