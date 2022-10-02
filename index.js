@@ -44,11 +44,11 @@ client.on('interactionCreate', async (interaction) => {
         const group = interaction.options.getSubcommandGroup();
         const subcommand = interaction.options.getSubcommand();
         if (group === null) {
-            // Handles command '/nexus help'
             if (subcommand === 'help') {
+                // Handles command '/nexus help'
                 await interaction.reply(getCommandHelp());
-            // Handles all other non-authentication commands
             } else {
+                // Handles all other non-authentication commands
                 await interaction.deferReply();
                 let reply = await handle(interaction);
                 if (reply.length > 2000) {
@@ -68,11 +68,11 @@ client.on('interactionCreate', async (interaction) => {
                 }
             }
         } else if (group === 'auth') {
-            // Handles command '/nexus auth help'
             if (subcommand === 'help') {
+                // Handles command '/nexus auth help'
                 interaction.reply(getAuthHelp());
-            // Handles command '/nexus auth check'
             } else if (subcommand === 'check') {
+                // Handles command '/nexus auth check'
                 let user = interaction.user;
                 checkAuthentication(user).then(result => {
                     if (result === 'valid') {
@@ -86,31 +86,41 @@ client.on('interactionCreate', async (interaction) => {
                         logErrorMessage(`Impossible outcome with checkAuthentication: ${result}\nInteraction: ${interaction}`);
                     }
                     if (logVerbose === 'true') {
-                        logInfoMessage(`Authentication check result for ${user}: ${result}`);
+                        logInfoMessage(`Authentication check result for ${user.tag}: ${result}`);
                     }
                 }).catch(err => {
                     interaction.reply({ content: 'An error occured running this command', ephemeral: true });
-                    logErrorMessage(`Error checking authentication for ${user}: ${err}\nInteraction: ${interaction}`);
+                    logErrorMessage(`Error checking authentication for ${user.tag}: ${err}\nInteraction: ${interaction}`);
                 });
-            // Handles command '/nexus auth set <token>'
             } else if (subcommand === 'set') {
+                // Handles command '/nexus auth set <token>'
                 const token = interaction.options.getString('token');
-                const valid = await validateToken(token);
-                if (valid) {
-                    tokens.set(interaction.user.id, token);
-                    saveData();
-                    await interaction.reply({ content: 'Your NexusMods API key has been validated and saved. Remove it with `/nexus auth remove`', ephemeral: true });
-                } else {
-                    await interaction.reply({ content: 'Your NexusMods API token was invalid. Try again with a different token', ephemeral: true });
-                }
-            // Handles command '/nexus auth remove'
+                validateToken(token).then(valid => {
+                    if (valid) {
+                        tokens.set(interaction.user.id, token);
+                        saveData();
+                        interaction.reply({ content: 'Your NexusMods API key has been validated and saved. Remove it with `/nexus auth remove`', ephemeral: true });
+                        if (logVerbose === 'true') {
+                            logInfoMessage(`Authentication set for ${interaction.user.tag}`);
+                        }
+                    } else {
+                        interaction.reply({ content: 'Your NexusMods API token was invalid. Try again with a different token', ephemeral: true });
+                    }
+                }).catch(err => {
+                    interaction.reply({ content: 'An error occured running this command', ephemeral: true });
+                    logErrorMessage(`Error settings authentication for ${user}: ${err}\nInteraction: ${interaction}`);
+                });
             } else if (subcommand === 'remove') {
+                // Handles command '/nexus auth remove'
                 if (tokens.get(interaction.user.id) === undefined) {
-                    await interaction.reply({ content: 'You do not have a stored API key', ephemeral: true });
+                    interaction.reply({ content: 'You do not have a stored API key', ephemeral: true });
                 } else {
                     tokens.delete(interaction.user.id);
                     saveData();
-                    await interaction.reply({ content: 'Your NexusMods API key is no longer being stored', ephemeral: true });
+                    interaction.reply({ content: 'Your NexusMods API key is no longer being stored', ephemeral: true });
+                    if (logVerbose === 'true') {
+                        logInfoMessage(`Authentication data removed for ${interaction.user.tag}`);
+                    }
                 }
             }
         }
@@ -205,6 +215,9 @@ async function validateToken(token) {
                 apikey: token
             }
         }
+        if (logVerbose === 'true') {
+            logInfoMessage('Contacting NexusMods to validate a token...');
+        }
         https.get('https://api.nexusmods.com/v1/users/validate.json', options, (res) => {
             res.on('error', (err) => {
                 reject(err);
@@ -217,11 +230,11 @@ async function validateToken(token) {
 
             res.on('end', () => {
                 let json = JSON.parse(content);
-                if (json.hasOwnProperty('message') && json['message'] === 'Please provide a valid API Key') {
-                    resolve(false);
-                } else {
-                    resolve(true);
+                let valid = !(json.hasOwnProperty('message') && json['message'] === 'Please provide a valid API Key');
+                if (logVerbose === 'true') {
+                    logInfoMessage('Got response from NexusMods validating token: ' + (valid ? 'valid' : 'invalid'));
                 }
+                resolve(valid);
             });
         });
     });
