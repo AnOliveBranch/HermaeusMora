@@ -5,6 +5,7 @@ const {
 const {
     discordToken,
     logInfo,
+    logVerbose,
     logErrors,
     infoLogChannelId,
     errorLogChannelId
@@ -66,20 +67,27 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (group === 'auth') {
             if (subcommand === 'help') {
-                await interaction.reply(getAuthHelp());
+                interaction.reply(getAuthHelp());
             } else if (subcommand === 'check') {
                 let user = interaction.user;
-                const authResult = await checkAuthentication(user);
-                if (authResult === 'valid') {
-                    await interaction.reply({ content: 'Your NexusMods API key is valid!', ephemeral: true });
-                } else if (authResult === 'invalid') {
-                    await interaction.reply({ content: 'Your NexusMods API key is invalid. Update it with `/nexus auth set <token>`. See `/nexus auth help` for more information', ephemeral: true });
-                } else if (authResult === 'null') {
-                    await interaction.reply({ content: 'You have not registered an API key with this bot. Set it with `/nexus auth set <token>`. See `/nexus auth help` for more information', ephemeral: true });
-                } else {
-                    await interaction.reply({ content: 'This shouldn\'t be able to happen. Contact @Robotic#1111 to investigate', ephemeral: true });
-                    console.log(authResult);
-                }
+                checkAuthentication(user).then(result => {
+                    if (result === 'valid') {
+                        interaction.reply({ content: 'Your NexusMods API key is valid!', ephemeral: true });
+                    } else if (result === 'invalid') {
+                        interaction.reply({ content: 'Your NexusMods API key is invalid. Update it with `/nexus auth set <token>`. See `/nexus auth help` for more information', ephemeral: true });
+                    } else if (result === 'null') {
+                        interaction.reply({ content: 'You have not registered an API key with this bot. Set it with `/nexus auth set <token>`. See `/nexus auth help` for more information', ephemeral: true });
+                    } else {
+                        interaction.reply({ content: 'This shouldn\'t be able to happen. Contact @Robotic#1111 to investigate', ephemeral: true });
+                        logErrorMessage(`Impossible outcome with checkAuthentication: ${result}\nInteraction: ${interaction}`);
+                    }
+                    if (logVerbose === 'true') {
+                        logInfoMessage(`Authentication check result for ${user}: ${result}`);
+                    }
+                }).catch(err => {
+                    interaction.reply({ content: 'An error occured running this command', ephemeral: true });
+                    logErrorMessage(`Error checking authentication for ${user}: ${err}\nInteraction: ${interaction}`);
+                });
             } else if (subcommand === 'set') {
                 const token = interaction.options.getString('token');
                 const valid = await validateToken(token);
@@ -158,7 +166,7 @@ function getAuthHelp() {
 }
 
 async function checkAuthentication(user) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const id = user.id;
         const token = tokens.get(id);
         if (token === undefined) {
@@ -171,7 +179,6 @@ async function checkAuthentication(user) {
                     resolve('invalid');
                 }
             }).catch((err) => {
-                console.log(err);
                 reject(err);
             });
         }
@@ -188,7 +195,6 @@ async function validateToken(token) {
         }
         https.get('https://api.nexusmods.com/v1/users/validate.json', options, (res) => {
             res.on('error', (err) => {
-                console.log(err);
                 reject(err);
             });
 
@@ -210,7 +216,7 @@ async function validateToken(token) {
 }
 
 async function logInfoMessage(message) {
-    if (logInfo && infoLogChannel !== null) {
+    if (logInfo === 'true' && infoLogChannel !== null) {
         infoLogChannel.send(message).catch(err => {
             logErrorMessage(`Caught error trying to info log ${message}\n${err}`);
         });
@@ -218,7 +224,7 @@ async function logInfoMessage(message) {
 }
 
 async function logErrorMessage(message) {
-    if (logErrors && errorLogChannel !== null) {
+    if (logErrors === 'true' && errorLogChannel !== null) {
         errorLogChannel.send(message).catch(err => {
             console.log(`Caught error trying to error log ${message}\n${err}`);
         });
@@ -241,7 +247,7 @@ async function fetchChannels() {
         if (errorLogChannelId !== '') {
             client.channels.fetch(errorLogChannelId).then(channel => {
                 errorLogChannel = channel;
-                logErrorMessage('Fetched and assigned error log channel');
+                logInfoMessage('Fetched and assigned error log channel');
             }).catch(err => {
                 console.log(err);
             });
