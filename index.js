@@ -23,8 +23,11 @@ let infoLogChannel = null;
 let errorLogChannel = null;
 
 client.once('ready', () => {
-    loadData();
-    fetchChannels();
+    fetchChannels().then(() => {
+        loadData();
+    }).catch(err => {
+        logErrorMessage(`Error while fetching channels: ${err}`);
+    });
     console.log(`Logged in as ${client.user.tag}!`);
     client.user.setActivity('Nexus Mods');
 });
@@ -101,20 +104,24 @@ client.on('interactionCreate', async (interaction) => {
 });
 
 async function loadData() {
-    if (fs.existsSync('./tokens.json')) {
-        const tokensFile = await fs.promises.readFile('./tokens.json', 'utf8');
-        tokenJSON = JSON.parse(tokensFile);
+    logInfoMessage('Loading tokens to memory...');
+    fs.promises.readFile('./tokens.json', 'utf8').then(file => {
+        tokenJSON = JSON.parse(file);
         for (const userID in tokenJSON) {
             tokens.set(userID, tokenJSON[userID]);
         }
-    }
+        logInfoMessage('Tokens loaded to memory');
+    }).catch(err => {
+        logErrorMessage(`Error loading tokens to memory: ${err}`);
+    });
 }
 
 async function saveData() {
-    await fs.writeFile('./tokens.json', JSON.stringify(Object.fromEntries(tokens)), (err) => {
-        if (err) {
-            console.log(err);
-        }
+    logInfoMessage('Saving data...');
+    fs.promises.writeFile('./tokens.json', JSON.stringify(Object.fromEntries(tokens))).then(() => {
+        logInfoMessage('Tokens saved');
+    }).catch(err => {
+        logErrorMessage(`Error saving data: ${err}`);
     });
 }
 
@@ -200,6 +207,46 @@ async function validateToken(token) {
             });
         });
     });
+}
+
+async function logInfoMessage(message) {
+    if (logInfo && infoLogChannel !== null) {
+        infoLogChannel.send(message).catch(err => {
+            logErrorMessage(`Caught error trying to info log ${message}\n${err}`);
+        });
+    }
+}
+
+async function logErrorMessage(message) {
+    if (logErrors && errorLogChannel !== null) {
+        errorLogChannel.send(message).catch(err => {
+            console.log(`Caught error trying to error log ${message}\n${err}`);
+        });
+    }
+}
+
+async function fetchChannels() {
+    if (logInfo) {
+        if (infoLogChannelId !== '') {
+            client.channels.fetch(infoLogChannelId).then(channel => {
+                infoLogChannel = channel;
+                logInfoMessage('Fetched and assigned info log channel');
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    }
+
+    if (logErrors) {
+        if (errorLogChannelId !== '') {
+            client.channels.fetch(errorLogChannelId).then(channel => {
+                errorLogChannel = channel;
+                logErrorMessage('Fetched and assigned error log channel');
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    }
 }
 
 async function handle(interaction) {
@@ -374,46 +421,6 @@ function getVersions(filesJSON, info) {
     }
     let versionString = `Found the following versions for ${info.name}: ${versions.join(', ')}`;
     return versionString;
-}
-
-async function logInfoMessage(message) {
-    if (logInfo && infoLogChannel !== null) {
-        infoLogChannel.send(message).catch(err => {
-            logErrorMessage(`Caught error trying to info log ${message}\n${err}`);
-        });
-    }
-}
-
-async function logErrorMessage(message) {
-    if (logErrors && errorLogChannel !== null) {
-        errorLogChannel.send(message).catch(err => {
-            console.log(`Caught error trying to error log ${message}\n${err}`);
-        });
-    }
-}
-
-async function fetchChannels() {
-    if (logInfo) {
-        if (infoLogChannelId !== '') {
-            client.channels.fetch(infoLogChannelId).then(channel => {
-                infoLogChannel = channel;
-                logInfoMessage('Fetched and assigned info log channel');
-            }).catch(err => {
-                console.log(err);
-            });
-        }
-    }
-
-    if (logErrors) {
-        if (errorLogChannelId !== '') {
-            client.channels.fetch(errorLogChannelId).then(channel => {
-                errorLogChannel = channel;
-                logErrorMessage('Fetched and assigned error log channel');
-            }).catch(err => {
-                console.log(err);
-            });
-        }
-    }
 }
 
 client.login(discordToken);
