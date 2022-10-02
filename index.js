@@ -3,7 +3,11 @@ const {
     GatewayIntentBits
 } = require('discord.js');
 const {
-    discordToken
+    discordToken,
+    logInfo,
+    logErrors,
+    infoLogChannelId,
+    errorLogChannelId
 } = require('./config.json');
 
 const client = new Client({
@@ -15,9 +19,12 @@ const https = require('https');
 const regex = new RegExp(/.*nexusmods\.com\/\w+\/mods\/\d+(\?.*)?/g);
 
 let tokens = new Map();
+let infoLogChannel = null;
+let errorLogChannel = null;
 
 client.once('ready', () => {
     loadData();
+    fetchChannels();
     console.log(`Logged in as ${client.user.tag}!`);
     client.user.setActivity('Nexus Mods');
 });
@@ -347,7 +354,7 @@ async function getModInfo(gameName, modId, token) {
 
 function getFileIds(filesJSON, version) {
     if (version === 'none' || version === 'blank') {
-        version = "";
+        version = '';
     }
     let files = [];
     for (let i = 0; i < filesJSON.files.length; i++) {
@@ -367,6 +374,46 @@ function getVersions(filesJSON, info) {
     }
     let versionString = `Found the following versions for ${info.name}: ${versions.join(', ')}`;
     return versionString;
+}
+
+async function logInfoMessage(message) {
+    if (logInfo && infoLogChannel !== null) {
+        infoLogChannel.send(message).catch(err => {
+            logErrorMessage(`Caught error trying to info log ${message}\n${err}`);
+        });
+    }
+}
+
+async function logErrorMessage(message) {
+    if (logErrors && errorLogChannel !== null) {
+        errorLogChannel.send(message).catch(err => {
+            console.log(`Caught error trying to error log ${message}\n${err}`);
+        });
+    }
+}
+
+async function fetchChannels() {
+    if (logInfo) {
+        if (infoLogChannelId !== '') {
+            client.channels.fetch(infoLogChannelId).then(channel => {
+                infoLogChannel = channel;
+                logInfoMessage('Fetched and assigned info log channel');
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    }
+
+    if (logErrors) {
+        if (errorLogChannelId !== '') {
+            client.channels.fetch(errorLogChannelId).then(channel => {
+                errorLogChannel = channel;
+                logErrorMessage('Fetched and assigned error log channel');
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    }
 }
 
 client.login(discordToken);
