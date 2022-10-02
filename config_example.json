@@ -2,5 +2,9 @@
 {
     "discordToken": "", // Discord token for the bot
     "guildId": "", // Guild ID for deploying guild-specific commands
-    "clientId": "" // Application ID found in discord dev portal
+    "clientId": "", // Application ID found in discord dev portal
+    "logInfo": "", // "true" or "false" if informational messages should be logged to another discord channel
+    "logErrors": "", // "true" or "false" if errors should be logged to another discord channel
+    "infoLogChannel": "", // Channel ID for logging info, if enabled
+    "errorLogChannel": "", // Channel ID for logging errors, if enabled
 }
