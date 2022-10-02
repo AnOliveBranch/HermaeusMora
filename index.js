@@ -376,10 +376,12 @@ async function getModFiles(gameName, modId, token) {
         }
     }
     return new Promise((resolve, reject) => {
+        if (logVerbose === 'true') {
+            logInfoMessage(`Getting files for ${gameName} mod ${modId}...`);
+        }
         https.get(`https://api.nexusmods.com/v1/games/${gameName}/mods/${modId}/files.json`, options, (res) => {
             res.on('error', (err) => {
-                console.log('!!!!!!!!!!!!!!!');
-                console.log(err);
+                logErrorMessage(`Error getting mod files for ${ganeName} mod ${modId}: ${err}`);
                 reject('An unknown error occured retrieving this mod');
             });
 
@@ -421,9 +423,12 @@ async function getModInfo(gameName, modId, token) {
         }
     }
     return new Promise((resolve, reject) => {
+        if (logVerbose === 'true') {
+            logInfoMessage(`Getting mod info for ${gameName} mod ${modId}...`);
+        }
         https.get(`https://api.nexusmods.com/v1/games/${gameName}/mods/${modId}.json`, options, (res) => {
             res.on('error', (err) => {
-                console.log(err);
+                logErrorMessage(`Error getting mod info for ${ganeName} mod ${modId}: ${err}`);
                 reject('An unknown error occured retrieving mod info');
             });
 
