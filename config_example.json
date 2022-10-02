@@ -4,7 +4,8 @@
     "guildId": "", // Guild ID for deploying guild-specific commands
     "clientId": "", // Application ID found in discord dev portal
     "logInfo": "", // "true" or "false" if informational messages should be logged to another discord channel
+    "logVerbose": "", // "true" or "false" if verbose logging should be enabled, will log user actions, requires logInfo = true
     "logErrors": "", // "true" or "false" if errors should be logged to another discord channel
     "infoLogChannelId": "", // Channel ID for logging info, if enabled
-    "errorLogChannelId": "", // Channel ID for logging errors, if enabled
+    "errorLogChannelId": "" // Channel ID for logging errors, if enabled
 }
