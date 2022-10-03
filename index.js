@@ -73,41 +73,43 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply(getAuthHelp());
             } else if (subcommand === 'check') {
                 // Handles command '/nexus auth check'
+                await interaction.deferReply();
                 let user = interaction.user;
                 checkAuthentication(user).then(result => {
                     if (result === 'valid') {
-                        interaction.reply({ content: 'Your NexusMods API key is valid!', ephemeral: true });
+                        interaction.editReply({ content: 'Your NexusMods API key is valid!', ephemeral: true });
                     } else if (result === 'invalid') {
-                        interaction.reply({ content: 'Your NexusMods API key is invalid. Update it with `/nexus auth set <token>`. See `/nexus auth help` for more information', ephemeral: true });
+                        interaction.editReply({ content: 'Your NexusMods API key is invalid. Update it with `/nexus auth set <token>`. See `/nexus auth help` for more information', ephemeral: true });
                     } else if (result === 'null') {
-                        interaction.reply({ content: 'You have not registered an API key with this bot. Set it with `/nexus auth set <token>`. See `/nexus auth help` for more information', ephemeral: true });
+                        interaction.editReply({ content: 'You have not registered an API key with this bot. Set it with `/nexus auth set <token>`. See `/nexus auth help` for more information', ephemeral: true });
                     } else {
-                        interaction.reply({ content: 'This shouldn\'t be able to happen. Contact @Robotic#1111 to investigate', ephemeral: true });
+                        interaction.editReply({ content: 'This shouldn\'t be able to happen. Contact @Robotic#1111 to investigate', ephemeral: true });
                         logErrorMessage(`Impossible outcome with checkAuthentication: ${result}\nInteraction: ${interaction}`);
                     }
                     if (logVerbose === 'true') {
                         logInfoMessage(`Authentication check result for ${user.tag}: ${result}`);
                     }
                 }).catch(err => {
-                    interaction.reply({ content: 'An error occured running this command', ephemeral: true });
+                    interaction.editReply({ content: 'An error occured running this command', ephemeral: true });
                     logErrorMessage(`Error checking authentication for ${user.tag}: ${err}\nInteraction: ${interaction}`);
                 });
             } else if (subcommand === 'set') {
                 // Handles command '/nexus auth set <token>'
+                await interaction.deferReply();
                 const token = interaction.options.getString('token');
                 validateToken(token).then(valid => {
                     if (valid) {
                         tokens.set(interaction.user.id, token);
                         saveData();
-                        interaction.reply({ content: 'Your NexusMods API key has been validated and saved. Remove it with `/nexus auth remove`', ephemeral: true });
+                        interaction.editReply({ content: 'Your NexusMods API key has been validated and saved. Remove it with `/nexus auth remove`', ephemeral: true });
                         if (logVerbose === 'true') {
                             logInfoMessage(`Authentication set for ${interaction.user.tag}`);
                         }
                     } else {
-                        interaction.reply({ content: 'Your NexusMods API token was invalid. Try again with a different token', ephemeral: true });
+                        interaction.editReply({ content: 'Your NexusMods API token was invalid. Try again with a different token', ephemeral: true });
                     }
                 }).catch(err => {
-                    interaction.reply({ content: 'An error occured running this command', ephemeral: true });
+                    interaction.editReply({ content: 'An error occured running this command', ephemeral: true });
                     logErrorMessage(`Error settings authentication for ${user}: ${err}\nInteraction: ${interaction}`);
                 });
             } else if (subcommand === 'remove') {
