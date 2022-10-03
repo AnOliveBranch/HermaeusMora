@@ -73,7 +73,7 @@ client.on('interactionCreate', async (interaction) => {
                 interaction.reply(getAuthHelp());
             } else if (subcommand === 'check') {
                 // Handles command '/nexus auth check'
-                await interaction.deferReply();
+                await interaction.deferReply({ ephemeral: true });
                 let user = interaction.user;
                 checkAuthentication(user).then(result => {
                     if (result === 'valid') {
@@ -95,7 +95,7 @@ client.on('interactionCreate', async (interaction) => {
                 });
             } else if (subcommand === 'set') {
                 // Handles command '/nexus auth set <token>'
-                await interaction.deferReply();
+                await interaction.deferReply({ ephemeral: true });
                 const token = interaction.options.getString('token');
                 validateToken(token).then(valid => {
                     if (valid) {
