@@ -301,31 +301,31 @@ async function handle(interaction) {
                 resolve('Your stored NexusMods API key is invalid. Use `/nexus auth set <token>` to update it. See `/nexus auth help` for more information');
                 return;
             }
-        });
 
-        if (link.split(' ').length > 1) {
-            resolve(`Invalid link: \`${link}\``);
-            return;
-        }
-        if (!link.match(regex)) {
-            resolve(`Invalid link: \`${link}\``);
-            return;
-        }
-        let gameName = getGameName(link);
-        let modId = getModId(link);
-        getModFiles(gameName, modId, tokens.get(interaction.user.id)).then((files) => {
-            getModInfo(gameName, modId, tokens.get(interaction.user.id)).then((info) => {
-                if (subcommand === 'link') {
-                    let version = interaction.options.getString('version');
-                    resolve(getLink(version, files, info));
-                } else if (subcommand === 'versions') {
-                    resolve(getVersions(files, info));
-                }
+            if (link.split(' ').length > 1) {
+                resolve(`Invalid link: \`${link}\``);
+                return;
+            }
+            if (!link.match(regex)) {
+                resolve(`Invalid link: \`${link}\``);
+                return;
+            }
+            let gameName = getGameName(link);
+            let modId = getModId(link);
+            getModFiles(gameName, modId, tokens.get(interaction.user.id)).then((files) => {
+                getModInfo(gameName, modId, tokens.get(interaction.user.id)).then((info) => {
+                    if (subcommand === 'link') {
+                        let version = interaction.options.getString('version');
+                        resolve(getLink(version, files, info));
+                    } else if (subcommand === 'versions') {
+                        resolve(getVersions(files, info));
+                    }
+                }).catch(err => {
+                    resolve(err);
+                });
             }).catch(err => {
                 resolve(err);
             });
-        }).catch(err => {
-            resolve(err);
         });
     });
 }
