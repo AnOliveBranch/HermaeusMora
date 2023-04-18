@@ -405,6 +405,10 @@ async function handle(interaction) {
                 resolve(`Invalid link: \`${link}\``);
                 return;
             }
+            if (link.includes('https://')) {
+                link = link.split('https://')[1];
+            }
+
             let gameName = getGameName(link);
             let modId = getModId(link);
             getModFiles(gameName, modId, tokens.get(interaction.user.id))
@@ -458,12 +462,12 @@ function getLink(version, filesJSON, info) {
 
 // Extracts the game name from a link
 function getGameName(link) {
-    return link.split('/')[3];
+    return link.split('/')[1];
 }
 
 // Extracts the mod ID from a link
 function getModId(link) {
-    let modId = link.split('/')[5];
+    let modId = link.split('/')[3];
     if (modId.includes('?')) {
         return modId.split('?')[0].substring(0, modId.split('?')[0].length);
     } else {
