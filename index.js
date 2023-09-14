@@ -226,7 +226,7 @@ function getCommandHelp() {
     help += 'See `/nexus auth help` for more information\n';
     help += 'This is an open source project licensed under the MIT License\n';
     help +=
-        'The source code is available here: <https://github.com/RyanEHenderson/HermaeusMora>\n ';
+        'The source code is available here: <https://github.com/AnOliveBranch/HermaeusMora>\n ';
     return help;
 }
 
