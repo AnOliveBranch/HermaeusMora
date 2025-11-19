@@ -321,7 +321,8 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/vim,osx,node,linux,grunt,eclipse,windows,sublimetext,visualstudiocode
 
-# Ensure user token is not committed
+# The following is added manually to ensure user configs for the bot are not
+# included in the repository accidentally
+data/
 config.json
-# Ensure user nexus api keys are not committed
 tokens.json
