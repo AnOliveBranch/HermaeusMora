@@ -5,18 +5,18 @@ const {
 	logVerbose,
 	logErrors,
 	infoLogChannelId,
-	errorLogChannelId
+	errorLogChannelId,
 } = require('./config.json');
 
 const client = new Client({
-	intents: [GatewayIntentBits.Guilds]
+	intents: [GatewayIntentBits.Guilds],
 });
 
 const fs = require('fs');
 const https = require('https');
 const regex = new RegExp(/.*nexusmods\.com\/\w+\/mods\/\d+(\?.*)?/g);
 
-let tokens = new Map();
+const tokens = new Map();
 let infoLogChannel = null;
 let errorLogChannel = null;
 
@@ -49,13 +49,13 @@ client.on('interactionCreate', async (interaction) => {
 			} else {
 				// Handles all other non-authentication commands
 				await interaction.deferReply();
-				let reply = await handle(interaction);
+				const reply = await handle(interaction);
 				if (reply.length > 2000) {
 					await interaction.editReply(
-						'Text response is too long for Discord, sending in multiple parts'
+						'Text response is too long for Discord, sending in multiple parts',
 					);
 					let tempReply = '';
-					let lines = reply.split('\n');
+					const lines = reply.split('\n');
 					for (let i = 0; i < lines.length; i++) {
 						if (tempReply.length + lines[i].length > 2000) {
 							await interaction.followUp(tempReply);
@@ -75,29 +75,29 @@ client.on('interactionCreate', async (interaction) => {
 			} else if (subcommand === 'check') {
 				// Handles command '/nexus auth check'
 				await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-				let user = interaction.user;
+				const user = interaction.user;
 				checkAuthentication(user)
 					.then((result) => {
 						if (result === 'valid') {
 							interaction.editReply({
-								content: 'Your NexusMods API key is valid!'
+								content: 'Your NexusMods API key is valid!',
 							});
 						} else if (result === 'invalid') {
 							interaction.editReply({
 								content:
-									'Your NexusMods API key is invalid. Update it with `/nexus auth set <token>`. See `/nexus auth help` for more information'
+									'Your NexusMods API key is invalid. Update it with `/nexus auth set <token>`. See `/nexus auth help` for more information',
 							});
 						} else if (result === 'null') {
 							interaction.editReply({
 								content:
-									'You have not registered an API key with this bot. Set it with `/nexus auth set <token>`. See `/nexus auth help` for more information'
+									'You have not registered an API key with this bot. Set it with `/nexus auth set <token>`. See `/nexus auth help` for more information',
 							});
 						} else {
 							interaction.editReply({
-								content: "This shouldn't be able to happen. Contact AnOliveBranch to investigate"
+								content: 'This should not be able to happen. Contact AnOliveBranch to investigate',
 							});
 							logErrorMessage(
-								`Impossible outcome with checkAuthentication: ${result}\nInteraction: ${interaction}`
+								`Impossible outcome with checkAuthentication: ${result}\nInteraction: ${interaction}`,
 							);
 						}
 						if (logVerbose === 'true') {
@@ -106,10 +106,10 @@ client.on('interactionCreate', async (interaction) => {
 					})
 					.catch((err) => {
 						interaction.editReply({
-							content: 'An error occured running this command'
+							content: 'An error occured running this command',
 						});
 						logErrorMessage(
-							`Error checking authentication for ${user.tag}: ${err}\nInteraction: ${interaction}`
+							`Error checking authentication for ${user.tag}: ${err}\nInteraction: ${interaction}`,
 						);
 					});
 			} else if (subcommand === 'set') {
@@ -123,23 +123,23 @@ client.on('interactionCreate', async (interaction) => {
 							saveData();
 							interaction.editReply({
 								content:
-									'Your NexusMods API key has been validated and saved. Remove it with `/nexus auth remove`'
+									'Your NexusMods API key has been validated and saved. Remove it with `/nexus auth remove`',
 							});
 							if (logVerbose === 'true') {
 								logInfoMessage(`Authentication set for ${interaction.user.tag}`);
 							}
 						} else {
 							interaction.editReply({
-								content: 'Your NexusMods API token was invalid. Try again with a different token'
+								content: 'Your NexusMods API token was invalid. Try again with a different token',
 							});
 						}
 					})
 					.catch((err) => {
 						interaction.editReply({
-							content: 'An error occured running this command'
+							content: 'An error occured running this command',
 						});
 						logErrorMessage(
-							`Error settings authentication for ${user}: ${err}\nInteraction: ${interaction}`
+							`Error settings authentication for ${interaction.user}: ${err}\nInteraction: ${interaction}`,
 						);
 					});
 			} else if (subcommand === 'remove') {
@@ -147,14 +147,14 @@ client.on('interactionCreate', async (interaction) => {
 				if (tokens.get(interaction.user.id) === undefined) {
 					interaction.reply({
 						content: 'You do not have a stored API key',
-						flags: MessageFlags.Ephemeral
+						flags: MessageFlags.Ephemeral,
 					});
 				} else {
 					tokens.delete(interaction.user.id);
 					saveData();
 					interaction.reply({
 						content: 'Your NexusMods API key is no longer being stored',
-						flags: MessageFlags.Ephemeral
+						flags: MessageFlags.Ephemeral,
 					});
 					if (logVerbose === 'true') {
 						logInfoMessage(`Authentication data removed for ${interaction.user.tag}`);
@@ -171,7 +171,7 @@ async function loadData() {
 	fs.promises
 		.readFile('./tokens.json', 'utf8')
 		.then((file) => {
-			tokenJSON = JSON.parse(file);
+			const tokenJSON = JSON.parse(file);
 			for (const userID in tokenJSON) {
 				tokens.set(userID, tokenJSON[userID]);
 			}
@@ -261,11 +261,11 @@ async function checkAuthentication(user) {
 // Calls NexusMods API to validate a token
 async function validateToken(token) {
 	return new Promise((resolve, reject) => {
-		let options = {
+		const options = {
 			headers: {
 				accept: 'application/json',
-				apikey: token
-			}
+				apikey: token,
+			},
 		};
 		if (logVerbose === 'true') {
 			logInfoMessage('Contacting NexusMods to validate a token...');
@@ -281,13 +281,14 @@ async function validateToken(token) {
 			});
 
 			res.on('end', () => {
-				let json = JSON.parse(content);
-				let valid = !(
-					json.hasOwnProperty('message') && json['message'] === 'Please provide a valid API Key'
+				const json = JSON.parse(content);
+				const valid = !(
+					Object.prototype.hasOwnProperty.call(json, 'message') &&
+					json['message'] === 'Please provide a valid API Key'
 				);
 				if (logVerbose === 'true') {
 					logInfoMessage(
-						'Got response from NexusMods validating token: ' + (valid ? 'valid' : 'invalid')
+						'Got response from NexusMods validating token: ' + (valid ? 'valid' : 'invalid'),
 					);
 				}
 				resolve(valid);
@@ -348,20 +349,20 @@ async function fetchChannels() {
 // Primary function for '/nexus link' and '/nexus versions'
 // Needs to have logging implemented
 async function handle(interaction) {
-	let subcommand = interaction.options.getSubcommand();
+	const subcommand = interaction.options.getSubcommand();
 
 	let link = interaction.options.getString('link');
 
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve) => {
 		checkAuthentication(interaction.user).then((auth) => {
 			if (auth === 'null') {
 				resolve(
-					'You do not have a stored NexusMods API key. Use `/nexus auth set <token>` to set it. See `/nexus auth help` for more information'
+					'You do not have a stored NexusMods API key. Use `/nexus auth set <token>` to set it. See `/nexus auth help` for more information',
 				);
 				return;
 			} else if (auth === 'invalid') {
 				resolve(
-					'Your stored NexusMods API key is invalid. Use `/nexus auth set <token>` to update it. See `/nexus auth help` for more information'
+					'Your stored NexusMods API key is invalid. Use `/nexus auth set <token>` to update it. See `/nexus auth help` for more information',
 				);
 				return;
 			}
@@ -378,14 +379,14 @@ async function handle(interaction) {
 				link = link.split('https://')[1];
 			}
 
-			let gameName = getGameName(link);
-			let modId = getModId(link);
+			const gameName = getGameName(link);
+			const modId = getModId(link);
 			getModFiles(gameName, modId, tokens.get(interaction.user.id))
 				.then((files) => {
 					getModInfo(gameName, modId, tokens.get(interaction.user.id))
 						.then((info) => {
 							if (subcommand === 'link') {
-								let version = interaction.options.getString('version');
+								const version = interaction.options.getString('version');
 								resolve(getLink(version, files, info));
 							} else if (subcommand === 'versions') {
 								resolve(getVersions(files, info));
@@ -404,26 +405,26 @@ async function handle(interaction) {
 
 // Builds a response for a link to a specific version of a mod
 function getLink(version, filesJSON, info) {
-	let fileIds = getFileIds(filesJSON, version);
+	const fileIds = getFileIds(filesJSON, version);
 	if (fileIds.length == 0) {
 		return 'Could not find the specified version';
 	}
-	let modName = info.name;
+	const modName = info.name;
 	if (fileIds.length > 1) {
 		let fileNames = '';
 		for (let i = 0; i < fileIds.length; i++) {
-			let fileId = fileIds[i][1][0];
-			let gameId = fileIds[i][1][1];
-			let uploadTime = fileIds[i][2].substring(0, 19);
+			const fileId = fileIds[i][1][0];
+			const gameId = fileIds[i][1][1];
+			const uploadTime = fileIds[i][2].substring(0, 19);
 			fileNames +=
 				fileIds[i][0] +
 				` ${uploadTime} <https://www.nexusmods.com/Core/Libs/Common/Widgets/DownloadPopUp?id=${fileId}&game_id=${gameId}>\n`;
 		}
 		return `Multiple files found for ${modName} version ${version}:\n${fileNames}`;
 	} else {
-		let fileId = fileIds[0][1][0];
-		let gameId = fileIds[0][1][1];
-		let fileName = fileIds[0][0];
+		const fileId = fileIds[0][1][0];
+		const gameId = fileIds[0][1][1];
+		const fileName = fileIds[0][0];
 		return `Download link to ${modName}: ${fileName} version ${version}\n<https://www.nexusmods.com/Core/Libs/Common/Widgets/DownloadPopUp?id=${fileId}&game_id=${gameId}>`;
 	}
 }
@@ -435,7 +436,7 @@ function getGameName(link) {
 
 // Extracts the mod ID from a link
 function getModId(link) {
-	let modId = link.split('/')[3];
+	const modId = link.split('/')[3];
 	if (modId.includes('?')) {
 		return modId.split('?')[0].substring(0, modId.split('?')[0].length);
 	} else {
@@ -445,11 +446,11 @@ function getModId(link) {
 
 // Calls NexusMods API to get the mod files for a mod
 async function getModFiles(gameName, modId, token) {
-	let options = {
+	const options = {
 		headers: {
 			accept: 'application/json',
-			apikey: token
-		}
+			apikey: token,
+		},
 	};
 	return new Promise((resolve, reject) => {
 		if (logVerbose === 'true') {
@@ -460,7 +461,7 @@ async function getModFiles(gameName, modId, token) {
 			options,
 			(res) => {
 				res.on('error', (err) => {
-					logErrorMessage(`Error getting mod files for ${ganeName} mod ${modId}: ${err}`);
+					logErrorMessage(`Error getting mod files for ${gameName} mod ${modId}: ${err}`);
 					reject('An unknown error occured retrieving this mod');
 				});
 
@@ -470,9 +471,9 @@ async function getModFiles(gameName, modId, token) {
 				});
 
 				res.on('end', () => {
-					let files = JSON.parse(content);
-					if (files.hasOwnProperty('code')) {
-						let errorCode = files.code;
+					const files = JSON.parse(content);
+					if (Object.prototype.hasOwnProperty.call(files, 'code')) {
+						const errorCode = files.code;
 						if (errorCode === 404) {
 							reject('That mod does not exist');
 						} else if (errorCode === 403) {
@@ -482,25 +483,25 @@ async function getModFiles(gameName, modId, token) {
 							reject('An unknown error occured retrieving this mod');
 						}
 						return;
-					} else if (files.hasOwnProperty('message')) {
+					} else if (Object.prototype.hasOwnProperty.call(files, 'message')) {
 						reject('An error occured');
 						return;
 					}
 
 					resolve(files);
 				});
-			}
+			},
 		);
 	});
 }
 
 // Calls the NexusMods API to get mod info for a mod
 async function getModInfo(gameName, modId, token) {
-	let options = {
+	const options = {
 		headers: {
 			accept: 'application/json',
-			apikey: token
-		}
+			apikey: token,
+		},
 	};
 	return new Promise((resolve, reject) => {
 		if (logVerbose === 'true') {
@@ -511,7 +512,7 @@ async function getModInfo(gameName, modId, token) {
 			options,
 			(res) => {
 				res.on('error', (err) => {
-					logErrorMessage(`Error getting mod info for ${ganeName} mod ${modId}: ${err}`);
+					logErrorMessage(`Error getting mod info for ${gameName} mod ${modId}: ${err}`);
 					reject('An unknown error occured retrieving mod info');
 				});
 
@@ -521,10 +522,10 @@ async function getModInfo(gameName, modId, token) {
 				});
 
 				res.on('end', () => {
-					let info = JSON.parse(content);
+					const info = JSON.parse(content);
 					resolve(info);
 				});
-			}
+			},
 		);
 	});
 }
@@ -534,13 +535,13 @@ function getFileIds(filesJSON, version) {
 	if (version === 'none' || version === 'blank') {
 		version = '';
 	}
-	let files = [];
+	const files = [];
 	for (let i = 0; i < filesJSON.files.length; i++) {
 		if (filesJSON.files[i].version == version) {
 			files.push([
 				filesJSON.files[i].name,
 				filesJSON.files[i].id,
-				filesJSON.files[i].uploaded_time
+				filesJSON.files[i].uploaded_time,
 			]);
 		}
 	}
@@ -549,13 +550,13 @@ function getFileIds(filesJSON, version) {
 
 // Extracts a list of versions from a NexusMods response
 function getVersions(filesJSON, info) {
-	let versions = [];
+	const versions = [];
 	for (let i = 0; i < filesJSON.files.length; i++) {
 		if (!versions.includes(filesJSON.files[i].version)) {
 			versions.push(filesJSON.files[i].version);
 		}
 	}
-	let versionString = `Found the following versions for ${info.name}: ${versions.join(', ')}`;
+	const versionString = `Found the following versions for ${info.name}: ${versions.join(', ')}`;
 	return versionString;
 }
 
