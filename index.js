@@ -1,11 +1,11 @@
 const { Client, GatewayIntentBits, MessageFlags } = require('discord.js');
 const {
-  discordToken,
-  logInfo,
-  logVerbose,
-  logErrors,
-  infoLogChannelId,
-  errorLogChannelId,
+	discordToken,
+	logInfo,
+	logVerbose,
+	logErrors,
+	infoLogChannelId,
+	errorLogChannelId,
 } = require('./config.js');
 
 const client = new Client({
