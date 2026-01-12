@@ -4,6 +4,8 @@ services:
     build: .
     image: hermaeusmora:latest
     container_name: hermaeusmora
+    # Run the container as a specific host user to avoid bind-mount permission issues
+    user: "${PUID:-1000}:${PGID:-1000}"
     restart: unless-stopped
     env_file:
       - .env
