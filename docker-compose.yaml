@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   hermaeusmora:
     # Build from the local Dockerfile
