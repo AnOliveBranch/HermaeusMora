@@ -1,24 +1,28 @@
 const { Client, GatewayIntentBits, MessageFlags } = require('discord.js');
 const {
-	discordToken,
-	logInfo,
-	logVerbose,
-	logErrors,
-	infoLogChannelId,
-	errorLogChannelId,
-} = require('./config.json');
+  discordToken,
+  logInfo,
+  logVerbose,
+  logErrors,
+  infoLogChannelId,
+  errorLogChannelId,
+} = require('./config.js');
 
 const client = new Client({
 	intents: [GatewayIntentBits.Guilds],
 });
 
 const fs = require('fs');
+const path = require('path');
 const https = require('https');
 const regex = new RegExp(/.*nexusmods\.com\/\w+\/mods\/\d+(\?.*)?/g);
 
 const tokens = new Map();
 let infoLogChannel = null;
 let errorLogChannel = null;
+
+const DATA_DIR = path.join(__dirname, 'data');
+const TOKENS_FILE = path.join(DATA_DIR, 'tokens.json');
 
 client.once('clientReady', () => {
 	fetchChannels()
@@ -94,14 +98,17 @@ client.on('interactionCreate', async (interaction) => {
 							});
 						} else {
 							interaction.editReply({
-								content: 'This should not be able to happen. Contact AnOliveBranch to investigate',
+								content:
+									'This should not be able to happen. Contact AnOliveBranch to investigate',
 							});
 							logErrorMessage(
 								`Impossible outcome with checkAuthentication: ${result}\nInteraction: ${interaction}`,
 							);
 						}
 						if (logVerbose === 'true') {
-							logInfoMessage(`Authentication check result for ${user.tag}: ${result}`);
+							logInfoMessage(
+								`Authentication check result for ${user.tag}: ${result}`,
+							);
 						}
 					})
 					.catch((err) => {
@@ -126,11 +133,14 @@ client.on('interactionCreate', async (interaction) => {
 									'Your NexusMods API key has been validated and saved. Remove it with `/nexus auth remove`',
 							});
 							if (logVerbose === 'true') {
-								logInfoMessage(`Authentication set for ${interaction.user.tag}`);
+								logInfoMessage(
+									`Authentication set for ${interaction.user.tag}`,
+								);
 							}
 						} else {
 							interaction.editReply({
-								content: 'Your NexusMods API token was invalid. Try again with a different token',
+								content:
+									'Your NexusMods API token was invalid. Try again with a different token',
 							});
 						}
 					})
@@ -157,7 +167,9 @@ client.on('interactionCreate', async (interaction) => {
 						flags: MessageFlags.Ephemeral,
 					});
 					if (logVerbose === 'true') {
-						logInfoMessage(`Authentication data removed for ${interaction.user.tag}`);
+						logInfoMessage(
+							`Authentication data removed for ${interaction.user.tag}`,
+						);
 					}
 				}
 			}
@@ -169,7 +181,8 @@ client.on('interactionCreate', async (interaction) => {
 async function loadData() {
 	logInfoMessage('Loading tokens to memory...');
 	fs.promises
-		.readFile('./tokens.json', 'utf8')
+		.mkdir(DATA_DIR, { recursive: true })
+		.then(() => fs.promises.readFile(TOKENS_FILE, 'utf8'))
 		.then((file) => {
 			const tokenJSON = JSON.parse(file);
 			for (const userID in tokenJSON) {
@@ -178,15 +191,27 @@ async function loadData() {
 			logInfoMessage('Tokens loaded to memory');
 		})
 		.catch((err) => {
-			logErrorMessage(`Error loading tokens to memory: ${err}`);
+			if (err && err.code === 'ENOENT') {
+				// No tokens file yet; start with empty map
+				logInfoMessage('No existing tokens file found; starting fresh');
+			} else {
+				logErrorMessage(`Error loading tokens to memory: ${err}`);
+			}
 		});
 }
 
 // Saves data from tokens map to tokens.json
+// Intended to be used in docker with a volume mount to persist data
 async function saveData() {
 	logInfoMessage('Saving data...');
 	fs.promises
-		.writeFile('./tokens.json', JSON.stringify(Object.fromEntries(tokens)))
+		.mkdir(DATA_DIR, { recursive: true })
+		.then(() =>
+			fs.promises.writeFile(
+				TOKENS_FILE,
+				JSON.stringify(Object.fromEntries(tokens)),
+			),
+		)
 		.then(() => {
 			logInfoMessage('Tokens saved');
 		})
@@ -208,7 +233,8 @@ function getCommandHelp() {
 	help += '`/nexus auth set <token>`\n';
 	help += 'See `/nexus auth help` for more information\n';
 	help += 'This is an open source project licensed under the MIT License\n';
-	help += 'The source code is available here: <https://github.com/AnOliveBranch/HermaeusMora>\n ';
+	help +=
+		'The source code is available here: <https://github.com/AnOliveBranch/HermaeusMora>\n ';
 	return help;
 }
 
@@ -216,18 +242,23 @@ function getCommandHelp() {
 function getAuthHelp() {
 	let help =
 		'NexusMods API Acceptable Use Policy (found here: <https://help.nexusmods.com/article/114-api-acceptable-use-policy>) ';
-	help += 'requires all users to provide their own personal API key to this application for use. ';
+	help +=
+		'requires all users to provide their own personal API key to this application for use. ';
 	help +=
 		'You can find your personal API key here: <https://www.nexusmods.com/users/myaccount?tab=api>, scroll to the bottom of the page\n';
-	help += 'API keys can be registred to this bot using the following command:\n';
+	help +=
+		'API keys can be registred to this bot using the following command:\n';
 	help += '`/nexus auth set <token>`\n';
-	help += 'This bot will verify the token with NexusMods and store it for future use\n';
+	help +=
+		'This bot will verify the token with NexusMods and store it for future use\n';
 	help +=
 		'Note: The API key will be stored in plaintext by the bot, it is necessary for it to function\n';
 	help += 'At any time, you may revoke this access in one of three ways:\n';
 	help += '1) Use the command `/nexus auth remove` (**preferred**)\n';
-	help += '2) Go to your NexusMods account API page and delete your personal API key\n';
-	help += '3) Go to your NexusMods account API page and regenerate your personal API key\n';
+	help +=
+		'2) Go to your NexusMods account API page and delete your personal API key\n';
+	help +=
+		'3) Go to your NexusMods account API page and regenerate your personal API key\n';
 	help +=
 		'You can verify that your API key stored by the bot is still valid using the following command:\n';
 	help += '`/nexus auth check`\n';
@@ -270,30 +301,35 @@ async function validateToken(token) {
 		if (logVerbose === 'true') {
 			logInfoMessage('Contacting NexusMods to validate a token...');
 		}
-		https.get('https://api.nexusmods.com/v1/users/validate.json', options, (res) => {
-			res.on('error', (err) => {
-				reject(err);
-			});
+		https.get(
+			'https://api.nexusmods.com/v1/users/validate.json',
+			options,
+			(res) => {
+				res.on('error', (err) => {
+					reject(err);
+				});
 
-			let content = '';
-			res.on('data', (chunk) => {
-				content += chunk;
-			});
+				let content = '';
+				res.on('data', (chunk) => {
+					content += chunk;
+				});
 
-			res.on('end', () => {
-				const json = JSON.parse(content);
-				const valid = !(
-					Object.prototype.hasOwnProperty.call(json, 'message') &&
-					json['message'] === 'Please provide a valid API Key'
-				);
-				if (logVerbose === 'true') {
-					logInfoMessage(
-						'Got response from NexusMods validating token: ' + (valid ? 'valid' : 'invalid'),
+				res.on('end', () => {
+					const json = JSON.parse(content);
+					const valid = !(
+						Object.prototype.hasOwnProperty.call(json, 'message') &&
+						json['message'] === 'Please provide a valid API Key'
 					);
-				}
-				resolve(valid);
-			});
-		});
+					if (logVerbose === 'true') {
+						logInfoMessage(
+							'Got response from NexusMods validating token: ' +
+								(valid ? 'valid' : 'invalid'),
+						);
+					}
+					resolve(valid);
+				});
+			},
+		);
 	});
 }
 
@@ -461,7 +497,9 @@ async function getModFiles(gameName, modId, token) {
 			options,
 			(res) => {
 				res.on('error', (err) => {
-					logErrorMessage(`Error getting mod files for ${gameName} mod ${modId}: ${err}`);
+					logErrorMessage(
+						`Error getting mod files for ${gameName} mod ${modId}: ${err}`,
+					);
 					reject('An unknown error occured retrieving this mod');
 				});
 
@@ -512,7 +550,9 @@ async function getModInfo(gameName, modId, token) {
 			options,
 			(res) => {
 				res.on('error', (err) => {
-					logErrorMessage(`Error getting mod info for ${gameName} mod ${modId}: ${err}`);
+					logErrorMessage(
+						`Error getting mod info for ${gameName} mod ${modId}: ${err}`,
+					);
 					reject('An unknown error occured retrieving mod info');
 				});
 
@@ -556,7 +596,9 @@ function getVersions(filesJSON, info) {
 			versions.push(filesJSON.files[i].version);
 		}
 	}
-	const versionString = `Found the following versions for ${info.name}: ${versions.join(', ')}`;
+	const versionString = `Found the following versions for ${
+		info.name
+	}: ${versions.join(', ')}`;
 	return versionString;
 }
 
